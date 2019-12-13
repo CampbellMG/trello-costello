@@ -107,7 +107,13 @@ var getBoardButtons = function(t) {
           });
         }
       });
-      var boardButtons = [];
+      var boardButtons = [{
+        icon: SIGMA_ICON,
+        text: 'Refresh',
+        callback: function(t) {
+          return t.set('board','shared','refresh',Math.random())
+        }
+      }];
       sums.forEach(function(sum, idx) {
         boardButtons.push({
           icon: SIGMA_ICON,
