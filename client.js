@@ -81,8 +81,10 @@ var getBadges = function(t){
 
 var getBoardButtons = function(t) {
   // get all the cards
-  return t.get('board', 'shared', 'costFields')
-  .then(function(costFields) {
+  return t.get('board', 'shared')
+  .then(function(data) {
+    var costFields = data.costFields ? data.costFields : [];
+    var costFieldTypes = data.costFieldTypes ? data.costFieldTypes : {};
   return t.cards('id', 'name', 'idList', 'labels')
   .then(function(cards) {
     var getCosts = [];
@@ -94,12 +96,14 @@ var getBoardButtons = function(t) {
     .then(function(costArray) {
       var sums = Array(costFields.length).fill(0);
       // for each card
-      costArray.forEach(function(cardCosts) {
+      costArray.forEach(function(cardCosts, cardIdx) {
         // for each cost on the card
         if (cardCosts && Array.isArray(cardCosts)) {
           cardCosts.forEach(function(cost,idx) {
-            if(cost)
+            var costField = costFields[idx];
+            if(cost && (!(costField in costFieldTypes) || costFieldTypes[costField] == cards[cardIdx].idList)){
               sums[idx] += parseFloat(cost);
+            }
           });
         }
       });
@@ -138,14 +142,19 @@ var getBoardButtons = function(t) {
                 Object.keys(listSums).forEach(function(listId) {  
                   var listName = lists.find(function(list){return listId == list.id}).name;
                   columnEntries.push({
-                    text: listName + ': ' + parseFloat(listSums[listId]).toFixed(2).toLocaleString(undefined,{minimumFractionDigits:2})
+                    text: listName + ': ' + parseFloat(listSums[listId]).toFixed(2).toLocaleString(undefined,{minimumFractionDigits:2}),
+                    callback: function(t){
+                      costFieldTypes[costFields[idx]] = listId;
+                      t.set('board', 'shared', 'costFieldTypes', costFieldTypes);
+                      t.closePopup();
+                    }
                   });
                 });
                 return t.popup({
                   title: 'Summary by Column',
                   items: columnEntries
                 });
-              }
+              };
 
               var summaryByLabel = function(t) {
                 var listSums = {};
